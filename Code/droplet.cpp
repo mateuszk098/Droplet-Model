@@ -191,9 +191,14 @@ double droplet::SaddlePoint(double start, double end, double beta, int N_tot)
  * its basic properties. In this function we set beta coefficient and energy spectrum level.
  * @param double beta (beta coefficient (beta = 1/T))
  * @param int spectrum_level (specific state of energy spectrum)
+ * @return textfile (text file with properties)
  * **/
-void droplet::specific_state_properties(double beta, int spectrum_level)
+void droplet::specific_state_properties(double T, int spectrum_level, string filename)
 {
+    ofstream ofile(filename.c_str(), ios::out);
+    ofile.precision(5);
+
+    double beta = 1 / T;
     double saddle_point = SaddlePoint(0.0, 1.0, beta, N_tot); // Saddle point for the integration process
     double phi = 0;                                           // Integration step
     complex<double> GPF = 0;                                  // Grand partition function
@@ -216,15 +221,15 @@ void droplet::specific_state_properties(double beta, int spectrum_level)
     AO = AO / PF * dt;
     FL = 2.0 / PF * FL * dt + AO - AO * AO;
 
-    cout << "Energy level:                          " << spectrum_level << "\n";
-    cout << "Total number of bosons:                " << N_tot << "\n";
-    cout << "Temperature:                           " << 1.0 / beta << "\n";
-    cout << "Saddle point:                          " << saddle_point << "\n";
-    cout << "Partition function:                    " << PF << "\n";
-    cout << "Helmholtz free energy:                 " << -log(PF) << "\n";
-    cout << "Average occupation:                    " << AO << "\n";
-    cout << "Fluctuations of average occupation:    " << FL << "\n";
-    cout << "Dispersion of average occupation:      " << sqrt(FL) << "\n";
+    ofile << "Energy level:                          " << spectrum_level << "\n";
+    ofile << "Total number of bosons:                " << N_tot << "\n";
+    ofile << "Temperature:                           " << 1.0 / beta << "\n";
+    ofile << "Saddle point:                          " << saddle_point << "\n";
+    ofile << "Partition function:                    " << PF << "\n";
+    ofile << "Helmholtz free energy:                 " << -log(PF) << "\n";
+    ofile << "Average occupation:                    " << AO << "\n";
+    ofile << "Fluctuations of average occupation:    " << FL << "\n";
+    ofile << "Dispersion of average occupation:      " << sqrt(FL) << "\n";
 }
 
 /** This function is used to check what happen with specific state
@@ -232,11 +237,12 @@ void droplet::specific_state_properties(double beta, int spectrum_level)
  * @param int spectrum_level (specific state of energy spectrum)
  * @return Text file with droplet properties
  * **/
-void droplet::state_with_temperature_change(int spectrum_level)
+void droplet::state_with_temperature_change(int spectrum_level, double Tp, double Tk, double dT, string filename)
 {
-    string filename = "specific_state_with_T.txt";
-    ofstream ofile;
-    ofile.open(filename.c_str(), ios::out);
+    ofstream ofile(filename.c_str(), ios::out);
+    ofile.precision(5);
+    ofile << std::fixed;
+    ofile << std::showpos;
 
     double beta = 0;         // Beta coefficient
     double saddle_point = 0; // Real saddle point
@@ -247,7 +253,13 @@ void droplet::state_with_temperature_change(int spectrum_level)
     double AO = 0;           // Average occupation
     double FL = 0;           // Fluctuations
 
-    for (double T = 0.1; T <= 5.0; T += 0.1)
+    ofile << "T\t"
+          << "F\t"
+          << "<N>\t"
+          << "Sigma\t"
+          << "\n";
+
+    for (double T = Tp; T <= Tk; T += dT)
     {
         beta = 1.0 / T;                                    // Beta coefficient
         saddle_point = SaddlePoint(0.0, 1.0, beta, N_tot); // Real saddle point

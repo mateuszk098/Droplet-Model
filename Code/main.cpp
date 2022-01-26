@@ -10,6 +10,7 @@
 
 #include <iostream>
 #include <cmath>
+#include <string>
 #include <vector>
 #include <chrono>
 #include <algorithm>
@@ -31,8 +32,8 @@ int main(int argc, char *argv[])
 
     // ----------------------- SECTION TO SET UP PROPER PARAMETERS --------------------------
     // Droplet parameters
-    double gdd = 14.0;                             // gdd coefficient
-    int N_tot = 100;                               // Number of bosons
+    double gdd = 25.0;                             // gdd coefficient
+    int N_tot = 50;                                // Number of bosons
     double N_droplet = static_cast<double>(N_tot); // Number of bosons whose create droplet
 
     // Model parameters
@@ -56,13 +57,15 @@ int main(int argc, char *argv[])
     // ----------------------- END OF SECTION TO SET UP PROPER PARAMETERS -------------------
 
     // ----------------------- SIMULATION LOOP ----------------------------------------------
-    string filename = argv[1];
+
+    string filename = "../Data/";
+    filename.append(argv[1]);
     ofstream output_file(filename.c_str(), ios::out);
     int thermalization = 5;                 // Self-consistent calculation steps
     auto tp = high_resolution_clock::now(); // Execution time - start
 
     // Main temperature loop
-    for (double T = 0.1; T <= 30; T += 0.1) // Iterate by temperature
+    for (double T = 0.1; T < 30.0; T += 0.1) // Iterate by temperature
     {
         double beta = 1.0 / T; // Beta coefficient
 
@@ -96,35 +99,15 @@ int main(int argc, char *argv[])
     auto tk = high_resolution_clock::now();           // Execution time - stop
     duration<double, std::milli> ms_double = tk - tp; // Getting  milliseconds as a double
     cout << "Execution time on the CPU: " << ms_double.count() << " ms";
+    // ----------------------- END OF SIMULATION LOOP ---------------------------------------
 
-    // spectrum.push_back(0); // First bound level is a droplet level
-
-    // m = 1;
-    // E = 0;
-
-    // // Bound levels
-    // while (true)
-    // {
-    //     E = (m / N_droplet) * (9.0 / (4.0 * M_PI * M_PI)) * sqrt(0.333333 + 0.25 * (m * m) / (N_droplet * N_droplet)) * gdd * gdd;
-    //     if (E - V < 1e-6)
-    //     {
-    //         spectrum.push_back(E);
-    //         m++;
-    //     }
-    //     else
-    //         break;
-    // }
-
-    // // Scatter levels
-    // for (int k = 1; k <= 1000; k++)
-    // {
-    //     E = 0.5 * (2 * M_PI * k / L) * (2 * M_PI * k / L) + V;
-    //     spectrum.push_back(E);
-    // }
-
-    // d->set_spectrum(spectrum);
-    // d->specific_state_properties(10, 0);
-    // d->state_with_temperature_change(0);
+    // ----------------------- TEST OTHER FUNCTIONS -----------------------------------------
+    // full_spectrum = ws->spectrum(L, a, V, c, xp, xkb, xks);   // Quantum well
+    // full_spectrum = rs->spectrum(N_droplet, gdd, V, L, 1000); // Real
+    // d->set_spectrum(full_spectrum);
+    // d->specific_state_properties(100, 0, "out.txt");
+    // d->state_with_temperature_change(0, 1.0, 100.0, 5.0, "out.txt");
+    // ----------------------- END OF TEST OTHER FUNCTIONS ----------------------------------
 
     delete rs;
     delete ws;

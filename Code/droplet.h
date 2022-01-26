@@ -30,8 +30,8 @@ private:
 public:
     droplet(int this_N_tot, double this_width, double this_V0);
     void set_spectrum(std::vector<double> this_spectrum);
-    void specific_state_properties(double beta, int spectrum_level);
-    void state_with_temperature_change(int spectrum_level);
+    void specific_state_properties(double T, int spectrum_level, std::string filename);
+    void state_with_temperature_change(int spectrum_level, double Tp, double Tk, double dT, std::string filename);
     std::stringstream droplet_width(double beta, double &N_droplet);
 };
 

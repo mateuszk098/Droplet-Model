@@ -2,3 +2,5 @@
 *.txt
 # Ignore all png files
 *.png
+# Ignore exe files
+*.exe
