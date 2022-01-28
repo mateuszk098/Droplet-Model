@@ -1,16 +1,13 @@
 #define _USE_MATH_DEFINES
-#define THREADS omp_get_max_threads()
+#define THREADS 12
 
-#include <iostream>
 #include <complex>
 #include <cmath>
 #include <fstream>
 #include <omp.h>
 #include "droplet.h"
 
-using std::cerr;
 using std::complex;
-using std::cout;
 using std::ios;
 using std::ofstream;
 using std::polar;
@@ -167,8 +164,7 @@ double droplet::SaddlePoint(double start, double end, double beta, int N_tot)
     double z0 = 0; // Searched saddle point for the integration process
 
     if (SPE(start, beta, N_tot) * SPE(end, beta, N_tot) > 0)
-        cerr << "Invalid range!"
-             << "\n";
+        return -1;
     else
     {
         while ((end - start) * 0.5 > eps)
@@ -292,10 +288,10 @@ void droplet::state_with_temperature_change(int spectrum_level, double Tp, doubl
  * @param bool flag (flag of text file save)
  * @return Text file with droplet properties
  * **/
-std::stringstream droplet::droplet_width(double beta, double &N_droplet)
+std::stringstream droplet::droplet_width(double T, double &N_droplet)
 {
     N_droplet = 0; // Number of bosons whose create quantum droplet
-
+    double beta = 1.0 / T;
     double saddle_point = SaddlePoint(0.0, 1.0, beta, N_tot);
     double Fluctuations = 0; // Fluctuations of every bound states
     double F = 0;            // Helmholtz free energy
@@ -334,6 +330,6 @@ std::stringstream droplet::droplet_width(double beta, double &N_droplet)
     }
 
     stringstream output;
-    output << 1.0 / beta << "\t" << alpha * N_droplet << "\t" << alpha * Fluctuations << "\t" << F << "\n";
+    output << T << "\t" << alpha * N_droplet << "\t" << alpha * Fluctuations << "\t" << F << "\n";
     return output;
 }

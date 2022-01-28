@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
 
     // ----------------------- SECTION TO SET UP PROPER PARAMETERS --------------------------
     // Droplet parameters
-    double gdd = 25.0;                             // gdd coefficient
+    double gdd = 100.0;                            // gdd coefficient
     int N_tot = 50;                                // Number of bosons
     double N_droplet = static_cast<double>(N_tot); // Number of bosons whose create droplet
 
@@ -61,14 +61,13 @@ int main(int argc, char *argv[])
     string filename = "../Data/";
     filename.append(argv[1]);
     ofstream output_file(filename.c_str(), ios::out);
+    output_file.precision(5);
     int thermalization = 5;                 // Self-consistent calculation steps
     auto tp = high_resolution_clock::now(); // Execution time - start
 
     // Main temperature loop
-    for (double T = 0.1; T < 30.0; T += 0.1) // Iterate by temperature
+    for (double T = 1.0; T < 200.0; T += 0.25) // Iterate by temperature
     {
-        double beta = 1.0 / T; // Beta coefficient
-
         // Thermalization loop
         // N_drop changes by reference 5 times
         // If thermalization reach 5th step then output about droplet is saved
@@ -78,8 +77,8 @@ int main(int argc, char *argv[])
             // Parameters a, c and xkb change with every step
             a = 2.0 * M_PI * M_PI * N_droplet / (3.0 * gdd);
             c = 2.0 * V * a * a;
-            xkb = sqrt(c) - eps;
-            full_spectrum = ws->spectrum(L, a, V, c, xp, xkb, xks);
+            xkb = sqrt(c * 0.25) - eps;
+            full_spectrum = ws->spectrum(L * 0.5, a * 0.5, V, c * 0.25, xp, xkb, xks);
             // -------------- END OF POTENTIAL WELL SPECTRUM --------------------------------
 
             // -------------- REAL SPECTRUM FROM MASTER THESIS ------------------------------
@@ -88,7 +87,7 @@ int main(int argc, char *argv[])
             // -------------- END OF REAL SPECTRUM FROM MASTER THESIS -----------------------
 
             d->set_spectrum(full_spectrum);
-            string output = (d->droplet_width(beta, N_droplet)).str();
+            string output = (d->droplet_width(T, N_droplet)).str();
 
             if (index == thermalization - 1)
                 output_file << output;

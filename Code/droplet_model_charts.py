@@ -3,10 +3,10 @@ import matplotlib.pyplot as plt
 
 
 print(plt.style.available)
-data1 = pd.read_csv('gdd25N50.txt', sep='\t', header=None)
-data2 = pd.read_csv('gdd25N75.txt', sep='\t', header=None)
-data3 = pd.read_csv('gdd25N100.txt', sep='\t', header=None)
-#data4 = pd.read_csv('gdd25N125.txt', sep='\t', header=None)
+data1 = pd.read_csv('../Data/gdd12N100_well.txt', sep='\t', header=None)
+data2 = pd.read_csv('../Data/gdd14N100_well.txt', sep='\t', header=None)
+data3 = pd.read_csv('../Data/gdd16N100_well.txt', sep='\t', header=None)
+data4 = pd.read_csv('../Data/gdd18N100_well.txt', sep='\t', header=None)
 
 fig, ax = plt.subplots(figsize=(8, 5.5), dpi=100)
 fig.subplots_adjust(bottom=0.17, top=0.95)
@@ -14,7 +14,7 @@ plt.style.use('tableau-colorblind10')
 plt.plot(data1[0], data1[1], '-', label=r'$N_{\rm tot} = 50$', color='black', linewidth=1.5, alpha=0.65)
 plt.plot(data2[0], data2[1], '-', label=r'$N_{\rm tot} = 75$', linewidth=1.5, alpha=0.65)
 plt.plot(data3[0], data3[1], '-', label=r'$N_{\rm tot} = 100$', linewidth=1.5, alpha=0.65)
-#plt.plot(data4[0], data4[1], '-', label=r'$N_{\rm tot} = 125$', linewidth=1.5, alpha=0.65)
+plt.plot(data4[0], data4[1], '-', label=r'$N_{\rm tot} = 125$', linewidth=1.5, alpha=0.65)
 plt.xlabel(r'$T\;\left(\frac{\hbar^2}{mL^2 k_B}\right)$', fontsize = 16)
 plt.ylabel(r'$W$', fontsize = 16)
 plt.legend(loc="upper right", fontsize = 16)
