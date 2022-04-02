@@ -196,8 +196,7 @@ void droplet::specific_state_properties(double T, int spectrum_level, string fil
     double AO = 0;                                            // Average occupation
     double FL = 0;                                            // Fluctuations
 
-#pragma omp parallel for private(phi, GPF) reduction(+ \
-                                                     : PF, AO, FL) num_threads(THREADS)
+    #pragma omp parallel for private(phi, GPF) reduction(+ : PF, AO, FL) num_threads(THREADS)
     for (int k = 1; k <= n; k++)
     {
         phi = tp + k * dt;
@@ -254,8 +253,7 @@ void droplet::state_with_temperature_change(int spectrum_level, double Tp, doubl
         beta = 1.0 / T;                                    // Beta coefficient
         saddle_point = SaddlePoint(0.0, 1.0, beta, N_tot); // Real saddle point
 
-#pragma omp parallel for private(phi, GPF) reduction(+ \
-                                                     : PF, AO, FL) num_threads(THREADS)
+        #pragma omp parallel for private(phi, GPF) reduction(+ : PF, AO, FL) num_threads(THREADS)
         for (int k = 1; k <= n; k++)
         {
             phi = tp + k * dt;
@@ -303,8 +301,7 @@ std::stringstream droplet::droplet_width(double T, double &N_droplet)
 
     for (int spectrum_level = 0; spectrum_level < max_bound_level; spectrum_level++)
     {
-#pragma omp parallel for private(phi, GPF) reduction(+ \
-                                                     : PF, AO, FL) num_threads(THREADS)
+        #pragma omp parallel for private(phi, GPF) reduction(+ : PF, AO, FL) num_threads(THREADS)
         for (int k = 1; k <= n; k++)
         {
             phi = tp + k * dt;
