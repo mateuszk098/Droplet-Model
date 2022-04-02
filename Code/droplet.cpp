@@ -7,16 +7,10 @@
 #include <omp.h>
 #include "droplet.h"
 
-using std::complex;
-using std::ios;
-using std::ofstream;
-using std::polar;
-using std::string;
-using std::stringstream;
-using std::vector;
+using namespace std;
 
-/** This is constructor. It sets up proper values to initial droplet and 
- * integration process. Also it calculates and sets alpha coefficient. 
+/** This is constructor. It sets up proper values to initial droplet and
+ * integration process. Also it calculates and sets alpha coefficient.
  * @param int N_tot (total number of bosons)
  * @param double width (initial width of droplet (at T = 0))
  * @param double V0 (potential (height of initial droplet))
@@ -49,7 +43,7 @@ void droplet::set_spectrum(vector<double> this_spectrum)
 
 /** This function calculates grand partition function in grand canonical ensemble
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature) 
+ * @param double beta (beta coefficient related to temperature)
  * @param double saddle_point (saddle point for the integration process)
  * @return std::complex<double> - GPF (grand partition function)
  * **/
@@ -75,10 +69,10 @@ complex<double> droplet::grandstatsum(double phi, double beta, double saddle_poi
 }
 
 /** This function calculates statistical sum in canonical ensemble based on grand
- * statistical sum using path integral forumaltion. 
+ * statistical sum using path integral forumaltion.
  * @param std::complex<double> GPF (grand partition function)
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature) 
+ * @param double beta (beta coefficient related to temperature)
  * @param double saddle_point (saddle point for the integration process)
  * @return std::complex<double> - PF (partition function)
  * **/
@@ -92,10 +86,10 @@ complex<double> droplet::statsum(complex<double> GPF, double phi, double beta, d
 }
 
 /** This function calculates average occupation of a specific state in canonical ensemble
- * based on grand statistical sum using path integral forumaltion. 
+ * based on grand statistical sum using path integral forumaltion.
  * @param std::complex<double> GPF (grand partition function)
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature) 
+ * @param double beta (beta coefficient related to temperature)
  * @param double saddle_point (saddle point for the integration process)
  * @param int level (energy spectrum level)
  * @return std::complex<double> - AO (average occupation of a specific state)
@@ -111,11 +105,11 @@ complex<double> droplet::occupation(complex<double> GPF, double phi, double beta
     return 1.0 / (2.0 * M_PI) * z * exp(-beta * specific_level) / (1.0 - z * exp(-beta * specific_level)) * GPF / pow(z, N_tot + 1) * z;
 }
 
-/** This function calculates fluctuations of average occupation of a specific state in canonical 
- * ensemble based on grand statistical sum using path integral forumaltion. 
+/** This function calculates fluctuations of average occupation of a specific state in canonical
+ * ensemble based on grand statistical sum using path integral forumaltion.
  * @param std::complex<double> GPF (grand partition function)
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature) 
+ * @param double beta (beta coefficient related to temperature)
  * @param double saddle_point (saddle point for the integration process)
  * @param int level (energy spectrum level)
  * @return std::complex<double> - FL (fluctuations of a specific state)
@@ -131,7 +125,7 @@ complex<double> droplet::fluctuations(complex<double> GPF, double phi, double be
     return 1.0 / (2 * M_PI) * z * exp(-beta * specific_level) / (1.0 - z * exp(-beta * specific_level)) * z * exp(-beta * specific_level) / (1.0 - z * exp(-beta * specific_level)) * GPF / pow(z, N_tot + 1) * z;
 }
 
-/** This function is used to calculate function to saddle point. 
+/** This function is used to calculate function to saddle point.
  * @param double z (searched saddle point)
  * @param double beta (beta coefficient related to temperature)
  * @param int N_tot (number of bosons)
@@ -149,15 +143,15 @@ double droplet::SPE(double z, double beta, int N_tot)
 }
 
 /** Bisection method to find saddle point to integration process
- * Unfortunately it does not work as well as for condensate so we are unlikely to use it. 
- * Perhaps we will be able to use this but within in narrow range of a and b, e.g. a = 0.9 
- * and b = 1.0. In any case we have to use Mathematica for low temperatures, where saddle 
+ * Unfortunately it does not work as well as for condensate so we are unlikely to use it.
+ * Perhaps we will be able to use this but within in narrow range of a and b, e.g. a = 0.9
+ * and b = 1.0. In any case we have to use Mathematica for low temperatures, where saddle
  * point is higher than 1.0
  * @param double start (start point of a range)
  * @param double end (end point of a range)
  * @param double beta (beta coefficient (beta = 1/T))
- * @param int N_tot (total number of bosons) 
- * @return double z0 (saddle point for the integration process) 
+ * @param int N_tot (total number of bosons)
+ * @return double z0 (saddle point for the integration process)
  * **/
 double droplet::SaddlePoint(double start, double end, double beta, int N_tot)
 {
@@ -229,7 +223,7 @@ void droplet::specific_state_properties(double T, int spectrum_level, string fil
 }
 
 /** This function is used to check what happen with specific state
- * occupation and fluctuations with temperature change. 
+ * occupation and fluctuations with temperature change.
  * @param int spectrum_level (specific state of energy spectrum)
  * @return Text file with droplet properties
  * **/

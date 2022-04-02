@@ -13,13 +13,13 @@ private:
     // Pointer to function
     typedef double (wellspec::*function)(double x, double L, double a, double cons);
 
-    // Function used to calculate roots of function on even bond energy levels
+    // Function used to calculate roots of function to even bond energy levels
     double even_eq_bond(double x, double L, double a, double cons);
-    // Function used to calculate roots of function on odd bond energy levels
+    // Function used to calculate roots of function to odd bond energy levels
     double odd_eq_bond(double x, double L, double a, double cons);
-    // Function used to calculate roots of function on even scatter energy levels
+    // Function used to calculate roots of function to even scatter energy levels
     double even_eq_scatt(double x, double L, double a, double cons);
-    // Function used to calculate roots of function on odd scatter energy levels
+    // Function used to calculate roots of function to odd scatter energy levels
     double odd_eq_scatt(double x, double L, double a, double cons);
 
     // Function used to calculate one root of function

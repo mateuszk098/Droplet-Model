@@ -2,7 +2,7 @@
  * This program calculates interesting properties of a new quantum state,
  * quantum droplet. The main method of calculating is based on performing
  * the calculations of canonical ensemble based on grand canonical ensemble.
- * For this purpose, I use the path integration formula based on Cauchy's 
+ * For this purpose, I use the path integration formula based on Cauchy's
  * integration formula. This program using multithreads.
  **/
 
@@ -32,8 +32,8 @@ int main(int argc, char *argv[])
 
     // ----------------------- SECTION TO SET UP PROPER PARAMETERS --------------------------
     // Droplet parameters
-    double gdd = 100.0;                            // gdd coefficient
-    int N_tot = 50;                                // Number of bosons
+    double gdd = 12.0;                             // gdd coefficient
+    int N_tot = 1000;                              // Number of bosons
     double N_droplet = static_cast<double>(N_tot); // Number of bosons whose create droplet
 
     // Model parameters
@@ -43,11 +43,11 @@ int main(int argc, char *argv[])
     double c = 2.0 * V * a * a;                         // Constant coefficient in model
 
     // Parameters used in finite potential well
-    int steps = 10000;          // Number of sub-bisection steps
-    double eps = 1e-6;          // Accuracy of sub-bisection method
-    double xp = eps;            // Begin of range
-    double xkb = sqrt(c) - eps; // End of range for bound levels
-    double xks = 50.0 - eps;    // End of range for scatter levels
+    int steps = 20000;                 // Number of sub-bisection steps
+    double eps = 1e-6;                 // Accuracy of sub-bisection method
+    double xp = eps;                   // Begin of range
+    double xkb = sqrt(c * 0.25) - eps; // End of range for bound levels
+    double xks = 80.0 - eps;           // End of range for scatter levels
 
     // Initialise objects
     vector<double> full_spectrum;            // Vector to store energy values
@@ -58,6 +58,7 @@ int main(int argc, char *argv[])
 
     // ----------------------- SIMULATION LOOP ----------------------------------------------
 
+    /*
     string filename = "../Data/";
     filename.append(argv[1]);
     ofstream output_file(filename.c_str(), ios::out);
@@ -66,7 +67,7 @@ int main(int argc, char *argv[])
     auto tp = high_resolution_clock::now(); // Execution time - start
 
     // Main temperature loop
-    for (double T = 1.0; T < 200.0; T += 0.25) // Iterate by temperature
+    for (double T = 0.1; T < 15.0; T += 0.02) // Iterate by temperature
     {
         // Thermalization loop
         // N_drop changes by reference 5 times
@@ -99,13 +100,18 @@ int main(int argc, char *argv[])
     duration<double, std::milli> ms_double = tk - tp; // Getting  milliseconds as a double
     cout << "Execution time on the CPU: " << ms_double.count() << " ms";
     // ----------------------- END OF SIMULATION LOOP ---------------------------------------
+    */
 
     // ----------------------- TEST OTHER FUNCTIONS -----------------------------------------
-    // full_spectrum = ws->spectrum(L, a, V, c, xp, xkb, xks);   // Quantum well
+    // xkb = sqrt(c * 0.25) - eps;
+    // full_spectrum = ws->spectrum(L * 0.5, a * 0.5, V, c * 0.25, xp, xkb, xks); // Quantum well
     // full_spectrum = rs->spectrum(N_droplet, gdd, V, L, 1000); // Real
-    // d->set_spectrum(full_spectrum);
-    // d->specific_state_properties(100, 0, "out.txt");
-    // d->state_with_temperature_change(0, 1.0, 100.0, 5.0, "out.txt");
+    for (int i = 0; i < 1000; i++) // 1D condensate spectrum
+        full_spectrum.push_back(i);
+
+    d->set_spectrum(full_spectrum);
+    // d->specific_state_properties(0.005, 0, "out.txt");
+    d->state_with_temperature_change(0, 1, 300, 1, "out.txt");
     // ----------------------- END OF TEST OTHER FUNCTIONS ----------------------------------
 
     delete rs;
