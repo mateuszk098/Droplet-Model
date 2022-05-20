@@ -56,13 +56,13 @@ int main(int argc, char *argv[])
 
     // ----------------------- SECTION TO SET UP PROPER PARAMETERS --------------------------
     // Droplet parameters
-    double gdd = 12.0; // gdd coefficient
-    int N_tot = 1000;  // Number of bosons
+    double gdd = 0; // gdd coefficient
+    int N_tot = 0;  // Number of bosons
 
     // Temperature parameters;
-    double Tp = 0.1;  // Initial temperature
-    double Tk = 15.0; // Final temperature
-    double dT = 0.02; // Interval
+    double Tp = 0; // Initial temperature
+    double Tk = 0; // Final temperature
+    double dT = 0; // Interval
 
     // Energy level
     int level = 0;

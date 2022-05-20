@@ -8,10 +8,10 @@ import seaborn as sns
 # data2 = pd.read_csv('C:/Users/Mateusz/Downloads/Studnia/DATA_BEC_3D_N1000.txt', sep='\t', header=None)
 # data3 = pd.read_csv('C:/Users/Mateusz/Downloads/Studnia/DATA_BEC_3D_N1000.txt', sep='\t', header=None)
 # data4 = pd.read_csv('C:/Users/Mateusz/Downloads/Studnia/DATA_BEC_3D_N1000.txt', sep='\t', header=None)
-data1 = pd.read_csv('../Data/gdd12N100_well_better_approx.txt', sep='\t', header=None)
-data2 = pd.read_csv('../Data/gdd14N100_well_better_approx.txt', sep='\t', header=None)
-data3 = pd.read_csv('../Data/gdd16N100_well_better_approx.txt', sep='\t', header=None)
-data4 = pd.read_csv('../Data/gdd18N100_well_better_approx.txt', sep='\t', header=None)
+data1 = pd.read_csv('../Data/gdd60N200_well.txt', sep='\t', header=None)
+data2 = pd.read_csv('../Data/gdd80N200_well.txt', sep='\t', header=None)
+data3 = pd.read_csv('../Data/gdd100N200_well.txt', sep='\t', header=None)
+data4 = pd.read_csv('../Data/gdd120N200_well.txt', sep='\t', header=None)
 
 # Set plot
 plt.figure(figsize=(8, 5.5), dpi = 100)
@@ -21,10 +21,10 @@ plt.subplots_adjust(bottom=0.17, top=0.95)
 sns.set_palette("mako_r")
 
 # Plot data
-sns.lineplot(data=data1, x=data1[0], y=data1[1], label=r'$g_{\rm dd} = 12$', linewidth=2)
-sns.lineplot(data=data2, x=data2[0], y=data2[1], label=r'$g_{\rm dd} = 14$', linewidth=2)
-sns.lineplot(data=data3, x=data3[0], y=data3[1], label=r'$g_{\rm dd} = 16$', linewidth=2)
-sns.lineplot(data=data4, x=data4[0], y=data4[1], label=r'$g_{\rm dd} = 18$', linewidth=2)
+sns.lineplot(data=data1, x=data1[0], y=data1[1], label=r'$g_{\rm dd} = 60$', linewidth=2)
+sns.lineplot(data=data2, x=data2[0], y=data2[1], label=r'$g_{\rm dd} = 80$', linewidth=2)
+sns.lineplot(data=data3, x=data3[0], y=data3[1], label=r'$g_{\rm dd} = 100$', linewidth=2)
+sns.lineplot(data=data4, x=data4[0], y=data4[1], label=r'$g_{\rm dd} = 120$', linewidth=2)
 # Set grid on the plot
 plt.grid(color = 'gray', linestyle = '-.', linewidth = 0.5)
 # Set x label description
