@@ -23,7 +23,7 @@ void Droplet::setSpectrum(const std::vector<double> &dropletEnergySpectrum) { th
  * @param double phi (integration step)
  * @param double beta (beta coefficient related to temperature)
  * @param double foundedSaddlePoint (saddle point for the integration process)
- * @return std::complex<double> - gSS (grand statistical sum)
+ * @return std::complex<double> - grandStatSum (grand statistical sum)
  * **/
 inline complex<double> Droplet::grandStatisticalSum(const double &phi, const double &beta, const double &saddlePoint) const
 {
@@ -32,62 +32,62 @@ inline complex<double> Droplet::grandStatisticalSum(const double &phi, const dou
     // z = r exp(it) which crosses the real saddle point r.
 
     const complex<double> z = polar(saddlePoint, phi);
-    complex<double> gSS = 1.;
+    complex<double> grandStatSum = 1.;
 
     for (const double &energy : dropletEnergySpectrum)
-        gSS = gSS * (1. / (1. - z * exp(-beta * energy)));
+        grandStatSum = grandStatSum * (1. / (1. - z * exp(-beta * energy)));
 
-    return gSS;
+    return grandStatSum;
 }
 
 /** Calculates statistical sum in canonical ensemble based on grand statistical sum using path integral forumaltion.
- * @param std::complex<double> gSS (grand statistical sum)
+ * @param std::complex<double> grandStatSum (grand statistical sum)
  * @param double phi (integration step)
  * @param double beta (1/T)
  * @param double saddlePoint
  * @return std::complex<double> - statistical sum
  * **/
-inline complex<double> Droplet::statisticalSum(const std::complex<double> &gSS, const double &phi, const double &beta,
+inline complex<double> Droplet::statisticalSum(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
                                                const double &saddlePoint) const
 {
     const complex<double> z = polar(saddlePoint, phi);
-    return 1. / (2. * M_PI) * gSS / pow(z, totalParticlesNumber + 1) * z;
+    return 1. / (2. * M_PI) * grandStatSum / pow(z, totalParticlesNumber + 1) * z;
 }
 
 /** This function calculates average stateOccupation of a specific state in canonical ensemble
  * based on grand statistical sum using path integral forumaltion.
- * @param std::complex<double> gSS (grand partition function)
+ * @param std::complex<double> grandStatSum (grand partition function)
  * @param double phi (integration step)
  * @param double beta (beta coefficient related to temperature)
  * @param double foundedSaddlePoint (saddle point for the integration process)
  * @param int level (energy dropletEnergySpectrum level)
- * @return std::complex<double> - AO (average stateOccupation of a specific state)
+ * @return std::complex<double> - averageOccupation (average stateOccupation of a specific state)
  * **/
-inline complex<double> Droplet::stateOccupation(const std::complex<double> &gSS, const double &phi, const double &beta,
+inline complex<double> Droplet::stateOccupation(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
                                                 const double &saddlePoint, const unsigned &spectrumState) const
 {
     const complex<double> z = polar(saddlePoint, phi);
     const double specificEnergyState = dropletEnergySpectrum[spectrumState];
     return 1. / (2. * M_PI) * z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) *
-           gSS / pow(z, totalParticlesNumber + 1) * z;
+           grandStatSum / pow(z, totalParticlesNumber + 1) * z;
 }
 
 /** This function calculates stateFluctuations of average stateOccupation of a specific state in canonical
  * ensemble based on grand statistical sum using path integral forumaltion.
- * @param std::complex<double> gSS (grand partition function)
+ * @param std::complex<double> grandStatSum (grand partition function)
  * @param double phi (integration step)
  * @param double beta (beta coefficient related to temperature)
  * @param double foundedSaddlePoint (saddle point for the integration process)
  * @param int level (energy dropletEnergySpectrum level)
  * @return std::complex<double> - FL (stateFluctuations of a specific state)
  * **/
-inline complex<double> Droplet::stateFluctuations(const std::complex<double> &gSS, const double &phi, const double &beta,
+inline complex<double> Droplet::stateFluctuations(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
                                                   const double &saddlePoint, const unsigned &spectrumState) const
 {
     const complex<double> z = polar(saddlePoint, phi);
     const double specificEnergyState = dropletEnergySpectrum[spectrumState];
     return 1. / (2. * M_PI) * z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) *
-           z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) * gSS / pow(z, totalParticlesNumber + 1) * z;
+           z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) * grandStatSum / pow(z, totalParticlesNumber + 1) * z;
 }
 
 /** This function is used to calculate function to saddle point.
@@ -144,7 +144,7 @@ double Droplet::saddlePoint(double start, double end, const double &beta, const 
 /** This function is used to calculate the specific state stateOccupation and
  * its basic properties. In this function we set beta coefficient and energy dropletEnergySpectrum level.
  * @param double beta (beta coefficient (beta = 1/T))
- * @param int specState (specific state of energy dropletEnergySpectrum)
+ * @param int bondState (specific state of energy dropletEnergySpectrum)
  * @return textfile (text file with properties)
  * **/
 void Droplet::specificStateProperties(const double &T, const unsigned &spectrumState, const std::string &filename)
@@ -156,76 +156,77 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
     const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
     
     double phi = 0.;
-    complex<double> gSS = 0.;
+    complex<double> grandStatSum = 0.;
 
-    double PF = 0.;
-    double AO = 0.;
-    double FL = 0.;
+    double statSum = 0.;
+    double averageOccupation = 0.;
+    double fluctuations = 0.;
 
-    #pragma omp parallel for private(phi, gSS) reduction(+ : PF, AO, FL) num_threads(THREADS)
+    #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation, fluctuations) num_threads(THREADS)
     for (unsigned k = 1; k <= integrationSteps; k++)
     {
         phi = integralLowerLimit + k * integrationAccuracy;
-        gSS = grandStatisticalSum(phi, beta, foundedSaddlePoint);
-        PF = PF + statisticalSum(gSS, phi, beta, foundedSaddlePoint).real();
-        AO = AO + stateOccupation(gSS, phi, beta, foundedSaddlePoint, spectrumState).real();
-        FL = FL + stateFluctuations(gSS, phi, beta, foundedSaddlePoint, spectrumState).real();
+        grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
+        statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
+        averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
+        fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
     }
 
-    PF = PF * integrationAccuracy;
-    AO = AO / PF * integrationAccuracy;
-    FL = 2. / PF * FL * integrationAccuracy + AO - AO * AO;
+    statSum = statSum * integrationAccuracy;
+    averageOccupation = averageOccupation / statSum * integrationAccuracy;
+    fluctuations = 2. / statSum * fluctuations * integrationAccuracy + averageOccupation - averageOccupation * averageOccupation;
 
     ofile << "Energy level:                                 " << spectrumState << "\n";
     ofile << "Total number of bosons:                       " << totalParticlesNumber << "\n";
     ofile << "Temperature:                                  " << T << "\n";
     ofile << "Saddle point:                                 " << foundedSaddlePoint << "\n";
-    ofile << "Partition function:                           " << PF << "\n";
-    ofile << "Helmholtz free energy:                        " << -log(PF) << "\n";
-    ofile << "Average stateOccupation:                      " << AO << "\n";
-    ofile << "Fluctuations of average stateOccupation:      " << FL << "\n";
-    ofile << "Dispersion of average stateOccupation:        " << sqrt(FL) << "\n";
+    ofile << "Partition function:                           " << statSum << "\n";
+    ofile << "Helmholtz free energy:                        " << -log(statSum) << "\n";
+    ofile << "Average stateOccupation:                      " << averageOccupation << "\n";
+    ofile << "Fluctuations of average stateOccupation:      " << fluctuations << "\n";
+    ofile << "Dispersion of average stateOccupation:        " << sqrt(fluctuations) << "\n";
     ofile.close();
 }
 
 /** This function is used to check what happen with specific state
  * stateOccupation and stateFluctuations with temperature change.
- * @param int specState (specific state of energy dropletEnergySpectrum)
+ * @param int bondState (specific state of energy dropletEnergySpectrum)
  * @return Text file with Droplet properties
  * **/
-void Droplet::specificStateTemperatureImpact(const unsigned &specState, const double &Tp, const double &Tk, const double &dT, const std::string &filename) const
+void Droplet::specificStateTemperatureImpact(const unsigned &bondState, const double &Tp, const double &Tk, 
+                                             const double &dT, const std::string &filename) const
 {
     ofstream ofile(filename.c_str(), ios::out);
     ofile << setprecision(5) << std::fixed << std::showpos;
     ofile << "T\t" << "F\t" << "<N>\t" << "Sigma\t\n"; 
 
     double phi = 0.;               
-    complex<double> gSS = 0.; 
+    complex<double> grandStatSum = 0.; 
     
-    double PF = 0.;           // Partition function
-    double AO = 0.;           // Average stateOccupation
-    double FL = 0.;           // Fluctuations
+    double statSum = 0.;           // Partition function
+    double averageOccupation = 0.;           // Average stateOccupation
+    double fluctuations = 0.;           // Fluctuations
 
     for (double T = Tp; T <= Tk; T += dT)
     {
         const double beta = 1. / T;                                                         
         const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
 
-        #pragma omp parallel for private(phi, gSS) reduction(+ : PF, AO, FL) num_threads(THREADS)
-        for (int k = 1; k <= integrationSteps; k++)
+        #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation, fluctuations) num_threads(THREADS)
+        for (unsigned k = 1; k <= integrationSteps; k++)
         {
             phi = integralLowerLimit + k * integrationAccuracy;
-            gSS = grandStatisticalSum(phi, beta, foundedSaddlePoint);
-            PF = PF + statisticalSum(gSS, phi, beta, foundedSaddlePoint).real();
-            AO = AO + stateOccupation(gSS, phi, beta, foundedSaddlePoint, specState).real();
-            FL = FL + stateFluctuations(gSS, phi, beta, foundedSaddlePoint, specState).real();
+            grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
+            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
+            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, bondState).real();
+            fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundedSaddlePoint, bondState).real();
         }
 
-        PF = PF * integrationAccuracy;
-        AO = AO / PF * integrationAccuracy;
-        FL = 2. / PF * FL * integrationAccuracy + AO - AO * AO;
+        statSum = statSum * integrationAccuracy;
+        averageOccupation = averageOccupation / statSum * integrationAccuracy;
+        fluctuations = 2. / statSum * fluctuations * integrationAccuracy + averageOccupation - averageOccupation * averageOccupation;
 
-        ofile << T << '\t' << -log(PF) << '\t' << AO << '\t' << FL << '\n';
+        ofile << T << '\t' << -log(statSum) << '\t' << averageOccupation << '\t' << fluctuations << '\n';
     }
 
     ofile.close();
@@ -238,48 +239,43 @@ void Droplet::specificStateTemperatureImpact(const unsigned &specState, const do
  * @param bool flag (flag of text file save)
  * @return Text file with Droplet properties
  * **/
-std::stringstream Droplet::dropletWidth(const double &T, double &NDroplet)
+std::stringstream Droplet::dropletWidth(const double &T, double &particlesInDroplet)
 {
-    NDroplet = 0; // Number of bosons whose create quantum Droplet
-    double beta = 1.0 / T;
-    double foundedSaddlePoint = saddlePoint(0.0, 1.0, beta, totalParticlesNumber);
-    double Fluctuations = 0; // Fluctuations of every bound states
-    double F = 0;            // Helmholtz free energy
-    int max_bound_level = 0; // Number of every states whose energy is less than potential
+    // Counting bond levels
+    unsigned maxBondStates = 0;
+    while (dropletEnergySpectrum[maxBondStates] - systemPotential < saddlePointAccuracy)
+        maxBondStates++;
 
-    // Counting bound levels
-    while (dropletEnergySpectrum[max_bound_level] - systemPotential < saddlePointAccuracy)
-        max_bound_level++;
+    const double beta = 1. / T;
+    const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
+    double helmholtzFreeEnergy = 0.;
+    particlesInDroplet = 0.;
 
-    double phi;              // Integration step
-    complex<double> gSS = 0; // Grand partition function
-    double PF = 0;           // Partition function
-    double AO = 0;           // Average stateOccupation
-    double FL = 0;           // Fluctuations
+    double phi = 0.;
+    complex<double> grandStatSum = 0.;
 
-    for (int specState = 0; specState < max_bound_level; specState++)
+    double statSum = 0.;           
+    double averageOccupation = 0.;                    
+
+    for (unsigned bondState = 0; bondState < maxBondStates; bondState++)
     {
-#pragma omp parallel for private(phi, gSS) reduction(+ \
-                                                     : PF, AO, FL) num_threads(THREADS)
-        for (int k = 1; k <= integrationSteps; k++)
+        #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation) num_threads(THREADS)
+        for (unsigned k = 1; k <= integrationSteps; k++)
         {
             phi = integralLowerLimit + k * integrationAccuracy;
-            gSS = grandStatisticalSum(phi, beta, foundedSaddlePoint);
-            PF = PF + statisticalSum(gSS, phi, beta, foundedSaddlePoint).real();
-            AO = AO + stateOccupation(gSS, phi, beta, foundedSaddlePoint, specState).real();
-            FL = FL + stateFluctuations(gSS, phi, beta, foundedSaddlePoint, specState).real();
+            grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
+            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
+            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, bondState).real();
         }
 
-        PF = PF * integrationAccuracy;
-        AO = AO / PF * integrationAccuracy;
-        FL = 2.0 / PF * FL * integrationAccuracy + AO - AO * AO;
+        statSum = statSum * integrationAccuracy;
+        averageOccupation = averageOccupation / statSum * integrationAccuracy;
 
-        NDroplet += AO;
-        Fluctuations += FL;
-        F += -log(PF);
+        particlesInDroplet += averageOccupation;
+        helmholtzFreeEnergy += -log(statSum);
     }
 
     stringstream output;
-    output << T << "\t" << scaleCoefficient * NDroplet << "\t" << scaleCoefficient * Fluctuations << "\t" << F << "\n";
+    output << T << "\t" << scaleCoefficient * particlesInDroplet << "\t" << helmholtzFreeEnergy << "\n";
     return output;
 }
