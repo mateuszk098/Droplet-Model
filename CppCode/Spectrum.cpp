@@ -8,7 +8,7 @@ using namespace std;
 Spectrum::Spectrum(const double &bisectionAccuracy, const unsigned &subBisectionNumber) : bisectionAccuracy(bisectionAccuracy),
                                                                                           subBisectionNumber(subBisectionNumber) {}
 
-inline void Spectrum::setSubBisectionNumber(const unsigned &subBisectionNumber) { this->subBisectionNumber = subBisectionNumber; }
+void Spectrum::setSubBisectionNumber(const unsigned &subBisectionNumber) { this->subBisectionNumber = subBisectionNumber; }
 
 /** Returns function to roots of even bond solutions
  * @param double x (function variable)

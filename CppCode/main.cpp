@@ -106,39 +106,39 @@ int main(int argc, char *argv[])
     auto tp = high_resolution_clock::now(); // Execution time - start
 
     // Main temperature loop
-    for (double T = Tp; T < Tk; T += dT) // Iterate by temperature
-    {
-        // Thermalization loop
-        // N_drop changes by reference 5 times
-        // If thermalization reach 5th step then output about droplet is saved
-        for (int index = 0; index < thermalization; index++)
-        {
-            // -------------- POTENTIAL WELL SPECTRUM ---------------------------------------
-            // Parameters a, c and xkb change with every step
-            if (spec_type == 1)
-            {
-                a = 2.0 * M_PI * M_PI * N_droplet / (3.0 * gdd);
-                c = 2.0 * V * a * a;
-                xkb = sqrt(c * 0.25) - eps;
-                full_spectrum = ws->calculateWellSpectrum(L * 0.5, a * 0.5, V, c * 0.25, xp, xkb, xks);
-            }
-            // -------------- END OF POTENTIAL WELL SPECTRUM --------------------------------
+    // for (double T = Tp; T < Tk; T += dT) // Iterate by temperature
+    // {
+    //     // Thermalization loop
+    //     // N_drop changes by reference 5 times
+    //     // If thermalization reach 5th step then output about droplet is saved
+    //     for (int index = 0; index < thermalization; index++)
+    //     {
+    //         // -------------- POTENTIAL WELL SPECTRUM ---------------------------------------
+    //         // Parameters a, c and xkb change with every step
+    //         if (spec_type == 1)
+    //         {
+    //             a = 2.0 * M_PI * M_PI * N_droplet / (3.0 * gdd);
+    //             c = 2.0 * V * a * a;
+    //             xkb = sqrt(c * 0.25) - eps;
+    //             full_spectrum = ws->calculateWellSpectrum(L * 0.5, a * 0.5, V, c * 0.25, xp, xkb, xks);
+    //         }
+    //         // -------------- END OF POTENTIAL WELL SPECTRUM --------------------------------
 
-            // -------------- REAL SPECTRUM FROM MASTER THESIS ------------------------------
-            else if (spec_type == 2)
-            {
-                int scatter_levels = 1000; // Number of scatter levels from real spectrum
-                full_spectrum = ws->calculateMasterThesisSpectrum(N_droplet, gdd, V, L, scatter_levels);
-            }
-            // -------------- END OF REAL SPECTRUM FROM MASTER THESIS -----------------------
+    //         // -------------- REAL SPECTRUM FROM MASTER THESIS ------------------------------
+    //         else if (spec_type == 2)
+    //         {
+    //             int scatter_levels = 1000; // Number of scatter levels from real spectrum
+    //             full_spectrum = ws->calculateMasterThesisSpectrum(N_droplet, gdd, V, L, scatter_levels);
+    //         }
+    //         // -------------- END OF REAL SPECTRUM FROM MASTER THESIS -----------------------
 
-            d->setSpectrum(full_spectrum);
-            string output = (d->dropletWidth(T, N_droplet)).str();
+    //         d->setSpectrum(full_spectrum);
+    //         string output = (d->dropletWidth(T, N_droplet)).str();
 
-            if (index == thermalization - 1)
-                output_file << output;
-        }
-    }
+    //         if (index == thermalization - 1)
+    //             output_file << output;
+    //     }
+    // }
 
     output_file.close();
     auto tk = high_resolution_clock::now();           // Execution time - stop
@@ -148,14 +148,14 @@ int main(int argc, char *argv[])
 
     // ----------------------- TEST OTHER FUNCTIONS -----------------------------------------
     // xkb = sqrt(c * 0.25) - eps;
-    // full_spectrum = ws->spectrum(L * 0.5, a * 0.5, V, c * 0.25, xp, xkb, xks); // Quantum well
+    full_spectrum = ws->calculateWellSpectrum(L * 0.5, a * 0.5, V, c * 0.25, xp, xkb, xks); // Quantum well
     // full_spectrum = rs->spectrum(N_droplet, gdd, V, L, 1000); // Real
     // for (int i = 0; i < 1000; i++) // 1D condensate spectrum
     //     full_spectrum.push_back(i);
 
-    // d->set_spectrum(full_spectrum);
-    // d->specific_state_properties(Tp, level, output_name);
-    // d->state_with_temperature_change(level, Tp, Tk, dT, output_name);
+    d->setSpectrum(full_spectrum);
+    d->specificStateProperties(Tp, level, output_name);
+    d->specificStateTemperatureImpact(level, Tp, Tk, dT, output_name);
     // ----------------------- END OF TEST OTHER FUNCTIONS ----------------------------------
 
     delete ws;
