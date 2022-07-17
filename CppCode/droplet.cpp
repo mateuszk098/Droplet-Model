@@ -87,7 +87,8 @@ inline complex<double> Droplet::stateFluctuations(const std::complex<double> &gr
     const complex<double> z = polar(saddlePoint, phi);
     const double specificEnergyState = dropletEnergySpectrum[spectrumState];
     return 1. / (2. * M_PI) * z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) *
-           z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) * grandStatSum / pow(z, totalParticlesNumber + 1) * z;
+           z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) * 
+           grandStatSum / pow(z, totalParticlesNumber + 1) * z;
 }
 
 /** This function is used to calculate function to saddle point.
@@ -194,7 +195,7 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
  * @return Text file with Droplet properties
  * **/
 void Droplet::specificStateTemperatureImpact(const unsigned &specState, const double &startTemperature, const double &endTemperature,
-                                        const double &temperatureStep, const std::string &filename) const
+                                             const double &temperatureStep, const std::string &filename) const
 {
     ofstream ofile(filename.c_str(), ios::out);
     ofile << setprecision(5) << std::fixed << std::showpos;
