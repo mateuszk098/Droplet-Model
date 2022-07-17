@@ -157,7 +157,7 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
     ofile << setprecision(5) << std::fixed << std::showpos;
 
     const double beta = 1. / T;
-    const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
+    const double foundSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
 
     double phi = 0.;
     complex<double> grandStatSum = 0.;
@@ -170,10 +170,10 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
     for (unsigned k = 1; k <= integrationSteps; k++)
     {
         phi = integralLowerLimit + k * integrationAccuracy;
-        grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
-        statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
-        averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
-        fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
+        grandStatSum = grandStatisticalSum(phi, beta, foundSaddlePoint);
+        statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundSaddlePoint).real();
+        averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundSaddlePoint, spectrumState).real();
+        fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundSaddlePoint, spectrumState).real();
     }
 
     statSum = statSum * integrationAccuracy;
@@ -183,7 +183,7 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
     ofile << "Energy level:                                 " << spectrumState << "\n";
     ofile << "Total number of bosons:                       " << totalParticlesNumber << "\n";
     ofile << "Temperature:                                  " << T << "\n";
-    ofile << "Saddle point:                                 " << foundedSaddlePoint << "\n";
+    ofile << "Saddle point:                                 " << foundSaddlePoint << "\n";
     ofile << "Partition function:                           " << statSum << "\n";
     ofile << "Helmholtz free energy:                        " << -log(statSum) << "\n";
     ofile << "Average stateOccupation:                      " << averageOccupation << "\n";
@@ -218,16 +218,16 @@ void Droplet::specificStateTemperatureImpact(const unsigned &spectrumState, cons
     for (double T = startTemperature; T <= endTemperature; T += temperatureStep)
     {
         const double beta = 1. / T;
-        const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
+        const double foundSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
 
         #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation, fluctuations) num_threads(THREADS)
         for (unsigned k = 1; k <= integrationSteps; k++)
         {
             phi = integralLowerLimit + k * integrationAccuracy;
-            grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
-            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
-            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
-            fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
+            grandStatSum = grandStatisticalSum(phi, beta, foundSaddlePoint);
+            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundSaddlePoint).real();
+            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundSaddlePoint, spectrumState).real();
+            fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundSaddlePoint, spectrumState).real();
         }
 
         statSum = statSum * integrationAccuracy;
@@ -255,7 +255,7 @@ std::tuple<double, double> Droplet::calculateDropletWidth(const double &T, doubl
         maxBondStates++;
 
     const double beta = 1. / T;
-    const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
+    const double foundSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
     double helmholtzFreeEnergy = 0.;
     particlesInDroplet = 0.;
 
@@ -271,9 +271,9 @@ std::tuple<double, double> Droplet::calculateDropletWidth(const double &T, doubl
         for (unsigned k = 1; k <= integrationSteps; k++)
         {
             phi = integralLowerLimit + k * integrationAccuracy;
-            grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
-            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
-            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, bondState).real();
+            grandStatSum = grandStatisticalSum(phi, beta, foundSaddlePoint);
+            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundSaddlePoint).real();
+            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundSaddlePoint, bondState).real();
         }
 
         statSum = statSum * integrationAccuracy;

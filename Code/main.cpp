@@ -83,7 +83,7 @@ int main(int argc, char *argv[])
     const unsigned subBisectionNumber = 20000;
     const double bisectionAccuracy = 1e-6;
     const double xp = bisectionAccuracy;             // Begin of range
-    const double xks = 100. - bisectionAccuracy;     // End of range for scatter spectrumEnergyStates
+    const double xks = 120.;                         // End of range for scatter spectrumEnergyStates
     double xkb = sqrt(c * 0.25) - bisectionAccuracy; // End of range for bond spectrumEnergyStates
 
     Droplet dropletInstance(totalParticlesNumber, a, V);
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
             {
                 for (unsigned index = 0; index < thermalisationSteps; index++)
                 {
-                    unsigned spectrumEnergyStates = 1000;
+                    unsigned spectrumEnergyStates = 500;
                     const vector<double> dropletSpectrum(spectrumInstance.calculateMasterThesisSpectrum(particlesInDroplet, gdd, V, L, spectrumEnergyStates));
 
                     dropletInstance.setSpectrum(dropletSpectrum);
@@ -165,7 +165,7 @@ int main(int argc, char *argv[])
         }
         case 2:
         {
-            unsigned spectrumEnergyStates = 1000;
+            unsigned spectrumEnergyStates = 500;
             const vector<double> dropletSpectrum(spectrumInstance.calculateMasterThesisSpectrum(particlesInDroplet, gdd, V, L, spectrumEnergyStates));
             dropletInstance.setSpectrum(dropletSpectrum);
             dropletInstance.specificStateProperties(startTemperature, spectrumEnergyState, outputPath);
@@ -193,7 +193,7 @@ int main(int argc, char *argv[])
         }
         case 2:
         {
-            unsigned spectrumEnergyStates = 1000;
+            unsigned spectrumEnergyStates = 500;
             const vector<double> dropletSpectrum(spectrumInstance.calculateMasterThesisSpectrum(particlesInDroplet, gdd, V, L, spectrumEnergyStates));
             dropletInstance.setSpectrum(dropletSpectrum);
             dropletInstance.specificStateTemperatureImpact(spectrumEnergyState, startTemperature, endTemperature, temperatureStep, outputPath);

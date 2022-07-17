@@ -9,8 +9,8 @@ import seaborn as sns
 # data3 = pd.read_csv('C:/Users/Mateusz/Downloads/Studnia/DATA_BEC_3D_N1000.txt', sep='\t', header=None)
 # data4 = pd.read_csv('C:/Users/Mateusz/Downloads/Studnia/DATA_BEC_3D_N1000.txt', sep='\t', header=None)
 #data1 = pd.read_csv('../Data/gdd1000N200_well.txt', sep='\t', header=None)
-data2 = pd.read_csv('../Data/gdd1000N200_well.txt', sep='\t', header=None)
-data3 = pd.read_csv('../Data/gdd1000N200_msc_new.txt', sep='\t', header=None)
+data2 = pd.read_csv('../Data/gdd25N50_new_well.txt', sep='\t', header=None)
+data3 = pd.read_csv('../Data/gdd25N50_old_well.txt', sep='\t', header=None)
 #data4 = pd.read_csv('../Data/gdd1000N200_msc_new.txt', sep='\t', header=None)
 
 # Set plot
