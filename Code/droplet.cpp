@@ -1,326 +1,287 @@
 #define _USE_MATH_DEFINES
 #define THREADS 12
 
-#include <complex>
+#include "Droplet.h"
+#include <omp.h>
 #include <cmath>
 #include <fstream>
-#include <omp.h>
-#include "droplet.h"
-
+#include <iomanip>
 using namespace std;
 
-/** This is constructor. It sets up proper values to initial droplet and
- * integration process. Also it calculates and sets alpha coefficient.
- * @param int N_tot (total number of bosons)
- * @param double width (initial width of droplet (at T = 0))
- * @param double V0 (potential (height of initial droplet))
- * **/
-droplet::droplet(int this_N_tot, double this_width, double this_V0)
+Droplet::Droplet(const unsigned &totalParticlesNumber, const double &dropletWidth, const double &systemPotential) : 
+totalParticlesNumber(totalParticlesNumber), dropletWidth(dropletWidth), systemPotential(systemPotential),
+integralLowerLimit(-M_PI), integralUpperLimit(M_PI), saddlePointAccuracy(1e-6)
 {
-    // Initial droplet parameters
-    N_tot = this_N_tot; // Number of bosons
-    V0 = this_V0;       // Number ofPotential
-    width = this_width; // Droplet width
-    alpha = width / N_tot;
-
-    // Path intergration parameters
-    tp = -M_PI;         // Lower limit of the integral
-    tk = M_PI;          // Upper limit of the integral
-    n = N_tot * 100;    // Number of interation steps should be 100-time greater
-    dt = (tk - tp) / n; // Integration step
-
-    // Saddle point parameters
-    eps = 1e-6; // Saddle point accuracy
+    scaleCoefficient = dropletWidth / totalParticlesNumber;
+    integrationSteps = totalParticlesNumber * 100;
+    integrationAccuracy = (integralUpperLimit - integralLowerLimit) / integrationSteps;
 }
 
-/** This function is used to set up energy spectrum to calculate statistical ensemble.
- * @param std::vector<double> spectrum (droplet energy spectrum)
- * **/
-void droplet::set_spectrum(vector<double> this_spectrum)
-{
-    spectrum = this_spectrum; // Energy spectrum, first state is a droplet state
-}
+void Droplet::setSpectrum(const std::vector<double> &dropletEnergySpectrum) { this->dropletEnergySpectrum = dropletEnergySpectrum; }
 
-/** This function calculates grand partition function in grand canonical ensemble
+/** 
+ * Calculates grand statistical sum in grand canonical ensemble
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature)
- * @param double saddle_point (saddle point for the integration process)
- * @return std::complex<double> - GPF (grand partition function)
- * **/
-complex<double> droplet::grandstatsum(double phi, double beta, double saddle_point)
+ * @param double beta (beta coefficient related to temperature beta = 1/T)
+ * @param double saddlePoint
+ * @return std::complex<double> - grand statistical sum
+ */
+inline complex<double> Droplet::grandStatisticalSum(const double &phi, const double &beta, const double &saddlePoint) const
 {
-    // We assume that z = exp(u) and z is complex.
-    // However, z is related to a physical parameter - the chemical potential u,
-    // so the saddle point should exist for a real value of z.
-    // I want to integrate along the circle z = r exp(it)
-    // which crosses the real saddle point r.
+    // We assume that z = exp(u) and z is complex. However, z is related to a physical parameter - the chemical
+    // potential u, so the saddle point should exist for a real value of z. I want to integrate along the circle
+    // z = r exp(it) which crosses the real saddle point r.
 
-    // Integration trajectory
-    complex<double> z = polar(saddle_point, phi);
-    // Grand partition function
-    complex<double> GPF = 1.0;
+    const complex<double> z = polar(saddlePoint, phi);
+    complex<double> grandStatSum = 1.;
 
-    // Calculation grand partition function for the whole energy spectrum
-    for (auto &energy : spectrum)
-        GPF = GPF * (1.0 / (1.0 - z * exp(-beta * energy)));
+    for (const double &energy : dropletEnergySpectrum)
+        grandStatSum = grandStatSum * (1. / (1. - z * exp(-beta * energy)));
 
-    // Return formula for grand partition function
-    return GPF;
+    return grandStatSum;
 }
 
-/** This function calculates statistical sum in canonical ensemble based on grand
- * statistical sum using path integral forumaltion.
- * @param std::complex<double> GPF (grand partition function)
+/** 
+ * Calculates statistical sum in canonical ensemble based on grand statistical sum using path integral forumaltion.
+ * @param std::complex<double> grand statistical sum
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature)
- * @param double saddle_point (saddle point for the integration process)
- * @return std::complex<double> - PF (partition function)
- * **/
-complex<double> droplet::statsum(complex<double> GPF, double phi, double beta, double saddle_point)
+ * @param double beta (beta coefficient related to temperature beta = 1/T)
+ * @param double saddlePoint
+ * @return std::complex<double> - statistical sum
+ */
+inline complex<double> Droplet::statisticalSum(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
+                                               const double &saddlePoint) const
 {
-    // Integration trajectory
-    complex<double> z = polar(saddle_point, phi);
-
-    // Return formula for partition function
-    return 1.0 / (2.0 * M_PI) * GPF / pow(z, N_tot + 1) * z;
+    const complex<double> z = polar(saddlePoint, phi);
+    return 1. / (2. * M_PI) * grandStatSum / pow(z, totalParticlesNumber + 1) * z;
 }
 
-/** This function calculates average occupation of a specific state in canonical ensemble
+/** 
+ * Calculates average occupation of a specific state in canonical ensemble
  * based on grand statistical sum using path integral forumaltion.
- * @param std::complex<double> GPF (grand partition function)
+ * @param std::complex<double> grand statistical sum
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature)
- * @param double saddle_point (saddle point for the integration process)
- * @param int level (energy spectrum level)
- * @return std::complex<double> - AO (average occupation of a specific state)
- * **/
-complex<double> droplet::occupation(complex<double> GPF, double phi, double beta, double saddle_point, int level)
+ * @param double beta (beta coefficient related to temperature beta = 1/T)
+ * @param double saddlePoint
+ * @param unsigned spectrum specific state
+ * @return std::complex<double> - average occupation of a specific state
+ */
+inline complex<double> Droplet::stateOccupation(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
+                                                const double &saddlePoint, const unsigned &spectrumState) const
 {
-    // Integration trajectory
-    complex<double> z = polar(saddle_point, phi);
-    // Energy of a specific state
-    double specific_level = spectrum[level];
-
-    // Return formula for occupation
-    return 1.0 / (2.0 * M_PI) * z * exp(-beta * specific_level) / (1.0 - z * exp(-beta * specific_level)) * GPF / pow(z, N_tot + 1) * z;
+    const complex<double> z = polar(saddlePoint, phi);
+    const double specificEnergyState = dropletEnergySpectrum[spectrumState];
+    return 1. / (2. * M_PI) * z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) *
+           grandStatSum / pow(z, totalParticlesNumber + 1) * z;
 }
 
-/** This function calculates fluctuations of average occupation of a specific state in canonical
+/** 
+ * Calculates fluctuations of a specific state in canonical
  * ensemble based on grand statistical sum using path integral forumaltion.
- * @param std::complex<double> GPF (grand partition function)
+ * @param std::complex<double> grand statistical sum
  * @param double phi (integration step)
- * @param double beta (beta coefficient related to temperature)
- * @param double saddle_point (saddle point for the integration process)
- * @param int level (energy spectrum level)
- * @return std::complex<double> - FL (fluctuations of a specific state)
- * **/
-complex<double> droplet::fluctuations(complex<double> GPF, double phi, double beta, double saddle_point, int level)
+ * @param double beta (beta coefficient related to temperature beta = 1/T)
+ * @param double saddlePoint
+ * @param unsigned spectrum specific state
+ * @return std::complex<double> - fluctuations of a specific state
+ */
+inline complex<double> Droplet::stateFluctuations(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
+                                                  const double &saddlePoint, const unsigned &spectrumState) const
 {
-    // Integration trajectory
-    complex<double> z = polar(saddle_point, phi);
-    // Energy of a specific state
-    double specific_level = spectrum[level];
-
-    // Return formula for fluctuations
-    return 1.0 / (2 * M_PI) * z * exp(-beta * specific_level) / (1.0 - z * exp(-beta * specific_level)) * z * exp(-beta * specific_level) / (1.0 - z * exp(-beta * specific_level)) * GPF / pow(z, N_tot + 1) * z;
+    const complex<double> z = polar(saddlePoint, phi);
+    const double specificEnergyState = dropletEnergySpectrum[spectrumState];
+    return 1. / (2. * M_PI) * z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) *
+           z * exp(-beta * specificEnergyState) / (1. - z * exp(-beta * specificEnergyState)) * 
+           grandStatSum / pow(z, totalParticlesNumber + 1) * z;
 }
 
-/** This function is used to calculate function to saddle point.
+/**
+ * Calculates function to saddle point.
  * @param double z (searched saddle point)
- * @param double beta (beta coefficient related to temperature)
- * @param int N_tot (number of bosons)
+ * @param double beta (beta coefficient related to temperature beta = 1/T)
+ * @param int totalParticlesNumber
  * @return double - function to saddle point
- * **/
-double droplet::SPE(double z, double beta, int N_tot)
+ */
+inline double Droplet::saddlePointFunction(const double &z, const double &beta, const unsigned &totalParticlesNumber) const
 {
-    // Function on a saddle point
-    double func = 0;
+    double function = 0.;
 
-    for (auto &energy : spectrum)
-        func += z / (exp(beta * energy) - z);
+    for (const double &energy : dropletEnergySpectrum)
+        function += z / (exp(beta * energy) - z);
 
-    return func - (N_tot + 1);
+    return function - (totalParticlesNumber + 1);
 }
 
-/** Bisection method to find saddle point to integration process
- * Unfortunately it does not work as well as for condensate so we are unlikely to use it.
- * Perhaps we will be able to use this but within in narrow range of a and b, e.g. a = 0.9
- * and b = 1.0. In any case we have to use Mathematica for low temperatures, where saddle
- * point is higher than 1.0
+/** 
+ * Bisection method to find saddle point to integration process.
  * @param double start (start point of a range)
  * @param double end (end point of a range)
- * @param double beta (beta coefficient (beta = 1/T))
- * @param int N_tot (total number of bosons)
- * @return double z0 (saddle point for the integration process)
- * **/
-double droplet::SaddlePoint(double start, double end, double beta, int N_tot)
+ * @param double beta (beta coefficient related to temperature beta = 1/T)
+ * @param int totalParticlesNumber
+ * @return double - searchedSaddlePoint
+ */
+double Droplet::saddlePoint(double start, double end, const double &beta, const unsigned &totalParticlesNumber) const
 {
-    double z0 = 0; // Searched saddle point for the integration process
+    double searchedSaddlePoint = 0.;
 
-    if (SPE(start, beta, N_tot) * SPE(end, beta, N_tot) > 0)
-        return -1;
+    if (saddlePointFunction(start, beta, totalParticlesNumber) * saddlePointFunction(end, beta, totalParticlesNumber) > 0.)
+        return -1.;
     else
     {
-        while ((end - start) * 0.5 > eps)
+        while ((end - start) * 0.5 > saddlePointAccuracy)
         {
-            z0 = (start + end) * 0.5;
+            searchedSaddlePoint = (start + end) * 0.5;
 
-            if (SPE(z0, beta, N_tot) == 0)
+            if (saddlePointFunction(searchedSaddlePoint, beta, totalParticlesNumber) == 0)
                 break;
-            else if (SPE(start, beta, N_tot) * SPE(z0, beta, N_tot) < 0)
-                end = z0;
+            else if (saddlePointFunction(start, beta, totalParticlesNumber) * saddlePointFunction(searchedSaddlePoint, beta, totalParticlesNumber) < 0.)
+                end = searchedSaddlePoint;
             else
-                start = z0;
+                start = searchedSaddlePoint;
         }
     }
 
-    return z0;
+    return searchedSaddlePoint;
 }
 
-/** This function is used to calculate the specific state occupation and
- * its basic properties. In this function we set beta coefficient and energy spectrum level.
- * @param double beta (beta coefficient (beta = 1/T))
- * @param int spectrum_level (specific state of energy spectrum)
- * @return textfile (text file with properties)
- * **/
-void droplet::specific_state_properties(double T, int spectrum_level, string filename)
-{
-    ofstream ofile(filename.c_str(), ios::out);
-    ofile.precision(5);
-
-    double beta = 1 / T;
-    double saddle_point = SaddlePoint(0.0, 1.0, beta, N_tot); // Saddle point for the integration process
-    double phi = 0;                                           // Integration step
-    complex<double> GPF = 0;                                  // Grand partition function
-    double PF = 0;                                            // Partition function
-    double AO = 0;                                            // Average occupation
-    double FL = 0;                                            // Fluctuations
-
-    #pragma omp parallel for private(phi, GPF) reduction(+ : PF, AO, FL) num_threads(THREADS)
-    for (int k = 1; k <= n; k++)
-    {
-        phi = tp + k * dt;
-        GPF = grandstatsum(phi, beta, saddle_point);
-        PF = PF + statsum(GPF, phi, beta, saddle_point).real();
-        AO = AO + occupation(GPF, phi, beta, saddle_point, spectrum_level).real();
-        FL = FL + fluctuations(GPF, phi, beta, saddle_point, spectrum_level).real();
-    }
-
-    PF = PF * dt;
-    AO = AO / PF * dt;
-    FL = 2.0 / PF * FL * dt + AO - AO * AO;
-
-    ofile << "Energy level:                          " << spectrum_level << "\n";
-    ofile << "Total number of bosons:                " << N_tot << "\n";
-    ofile << "Temperature:                           " << 1.0 / beta << "\n";
-    ofile << "Saddle point:                          " << saddle_point << "\n";
-    ofile << "Partition function:                    " << PF << "\n";
-    ofile << "Helmholtz free energy:                 " << -log(PF) << "\n";
-    ofile << "Average occupation:                    " << AO << "\n";
-    ofile << "Fluctuations of average occupation:    " << FL << "\n";
-    ofile << "Dispersion of average occupation:      " << sqrt(FL) << "\n";
-}
-
-/** This function is used to check what happen with specific state
- * occupation and fluctuations with temperature change.
- * @param int spectrum_level (specific state of energy spectrum)
+/** 
+ * Calculates the specific state occupation and its basic properties. 
+ * @param double temperature
+ * @param unsigned spectrum specific state
+ * @param string filename where to save results
  * @return Text file with droplet properties
- * **/
-void droplet::state_with_temperature_change(int spectrum_level, double Tp, double Tk, double dT, string filename)
+ */
+void Droplet::specificStateProperties(const double &T, const unsigned &spectrumState, const std::string &filename)
 {
     ofstream ofile(filename.c_str(), ios::out);
-    ofile.precision(5);
-    ofile << std::fixed;
-    ofile << std::showpos;
+    ofile << setprecision(5) << std::fixed << std::showpos;
 
-    double beta = 0;         // Beta coefficient
-    double saddle_point = 0; // Real saddle point
-    double phi = 0;          // Integration step
+    const double beta = 1. / T;
+    const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
 
-    complex<double> GPF = 0; // Grand partition function
-    double PF = 0;           // Partition function
-    double AO = 0;           // Average occupation
-    double FL = 0;           // Fluctuations
+    double phi = 0.;
+    complex<double> grandStatSum = 0.;
 
-    ofile << "T\t"
-          << "F\t"
-          << "<N>\t"
-          << "Sigma\t"
-          << "\n";
+    double statSum = 0.;
+    double averageOccupation = 0.;
+    double fluctuations = 0.;
 
-    for (double T = Tp; T <= Tk; T += dT)
+    #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation, fluctuations) num_threads(THREADS)
+    for (unsigned k = 1; k <= integrationSteps; k++)
     {
-        beta = 1.0 / T;                                    // Beta coefficient
-        saddle_point = SaddlePoint(0.0, 1.0, beta, N_tot); // Real saddle point
+        phi = integralLowerLimit + k * integrationAccuracy;
+        grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
+        statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
+        averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
+        fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
+    }
 
-        #pragma omp parallel for private(phi, GPF) reduction(+ : PF, AO, FL) num_threads(THREADS)
-        for (int k = 1; k <= n; k++)
+    statSum = statSum * integrationAccuracy;
+    averageOccupation = averageOccupation / statSum * integrationAccuracy;
+    fluctuations = 2. / statSum * fluctuations * integrationAccuracy + averageOccupation - averageOccupation * averageOccupation;
+
+    ofile << "Energy level:                                 " << spectrumState << "\n";
+    ofile << "Total number of bosons:                       " << totalParticlesNumber << "\n";
+    ofile << "Temperature:                                  " << T << "\n";
+    ofile << "Saddle point:                                 " << foundedSaddlePoint << "\n";
+    ofile << "Partition function:                           " << statSum << "\n";
+    ofile << "Helmholtz free energy:                        " << -log(statSum) << "\n";
+    ofile << "Average stateOccupation:                      " << averageOccupation << "\n";
+    ofile << "Fluctuations of average stateOccupation:      " << fluctuations << "\n";
+    ofile << "Dispersion of average stateOccupation:        " << sqrt(fluctuations) << "\n";
+    ofile.close();
+}
+
+/** 
+ * Calculates what happen with specific state with temperature change.
+ * @param unsigned specific spectrum state
+ * @param double start temperature
+ * @param double end temperature
+ * @param double temperature step
+ * @param string filename where to save results
+ * @return Text file with Droplet properties
+ */
+void Droplet::specificStateTemperatureImpact(const unsigned &spectrumState, const double &startTemperature, const double &endTemperature,
+                                             const double &temperatureStep, const std::string &filename) const
+{
+    ofstream ofile(filename.c_str(), ios::out);
+    ofile << setprecision(5) << std::fixed << std::showpos;
+    ofile << "T\t" << "F\t" << "<N>\t" << "Sigma\t\n";
+
+    double phi = 0.;
+    complex<double> grandStatSum = 0.;
+
+    double statSum = 0.;           
+    double averageOccupation = 0.; 
+    double fluctuations = 0.;      
+
+    for (double T = startTemperature; T <= endTemperature; T += temperatureStep)
+    {
+        const double beta = 1. / T;
+        const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
+
+        #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation, fluctuations) num_threads(THREADS)
+        for (unsigned k = 1; k <= integrationSteps; k++)
         {
-            phi = tp + k * dt;
-            GPF = grandstatsum(phi, beta, saddle_point);
-            PF = PF + statsum(GPF, phi, beta, saddle_point).real();
-            AO = AO + occupation(GPF, phi, beta, saddle_point, spectrum_level).real();
-            FL = FL + fluctuations(GPF, phi, beta, saddle_point, spectrum_level).real();
+            phi = integralLowerLimit + k * integrationAccuracy;
+            grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
+            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
+            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
+            fluctuations = fluctuations + stateFluctuations(grandStatSum, phi, beta, foundedSaddlePoint, spectrumState).real();
         }
 
-        PF = PF * dt;
-        AO = AO / PF * dt;
-        FL = 2.0 / PF * FL * dt + AO - AO * AO;
+        statSum = statSum * integrationAccuracy;
+        averageOccupation = averageOccupation / statSum * integrationAccuracy;
+        fluctuations = 2. / statSum * fluctuations * integrationAccuracy + averageOccupation - averageOccupation * averageOccupation;
 
-        ofile << T << "\t" << -log(PF) << "\t" << AO << "\t" << FL << "\n";
+        ofile << T << '\t' << -log(statSum) << '\t' << averageOccupation << '\t' << fluctuations << '\n';
     }
 
     ofile.close();
 }
 
-/** This function is use to calculate droplet width in a special temperature.
- * Quantum droplet consist of first droplet state and every bound states
- * @param double beta (beta coefficient (beta = 1/T))
- * @param double& N_droplet (number of bosons whose create droplet)
- * @param bool flag (flag of text file save)
+/** 
+ * Calculate droplet width in the specific temperature.
+ * Quantum Droplet consist of first droplet state and every bond states.
+ * @param double temperature
+ * @param double particlesInDroplet
  * @return Text file with droplet properties
- * **/
-std::stringstream droplet::droplet_width(double T, double &N_droplet)
+ */
+std::tuple<double, double> Droplet::calculateDropletWidth(const double &T, double &particlesInDroplet)
 {
-    N_droplet = 0; // Number of bosons whose create quantum droplet
-    double beta = 1.0 / T;
-    double saddle_point = SaddlePoint(0.0, 1.0, beta, N_tot);
-    double Fluctuations = 0; // Fluctuations of every bound states
-    double F = 0;            // Helmholtz free energy
-    int max_bound_level = 0; // Number of every states whose energy is less than potential
+    // Counting bond levels
+    unsigned maxBondStates = 0;
+    while (dropletEnergySpectrum[maxBondStates] - systemPotential < 1e-6)
+        maxBondStates++;
 
-    // Counting bound levels
-    while (spectrum[max_bound_level] - V0 < eps)
-        max_bound_level++;
+    const double beta = 1. / T;
+    const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
+    double helmholtzFreeEnergy = 0.;
+    particlesInDroplet = 0.;
 
-    double phi;              // Integration step
-    complex<double> GPF = 0; // Grand partition function
-    double PF = 0;           // Partition function
-    double AO = 0;           // Average occupation
-    double FL = 0;           // Fluctuations
+    double phi = 0.;
+    complex<double> grandStatSum = 0.;
 
-    for (int spectrum_level = 0; spectrum_level < max_bound_level; spectrum_level++)
+    double statSum = 0.;
+    double averageOccupation = 0.;
+
+    for (unsigned bondState = 0; bondState < maxBondStates; bondState++)
     {
-        #pragma omp parallel for private(phi, GPF) reduction(+ : PF, AO, FL) num_threads(THREADS)
-        for (int k = 1; k <= n; k++)
+        #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation) num_threads(THREADS)
+        for (unsigned k = 1; k <= integrationSteps; k++)
         {
-            phi = tp + k * dt;
-            GPF = grandstatsum(phi, beta, saddle_point);
-            PF = PF + statsum(GPF, phi, beta, saddle_point).real();
-            AO = AO + occupation(GPF, phi, beta, saddle_point, spectrum_level).real();
-            FL = FL + fluctuations(GPF, phi, beta, saddle_point, spectrum_level).real();
+            phi = integralLowerLimit + k * integrationAccuracy;
+            grandStatSum = grandStatisticalSum(phi, beta, foundedSaddlePoint);
+            statSum = statSum + statisticalSum(grandStatSum, phi, beta, foundedSaddlePoint).real();
+            averageOccupation = averageOccupation + stateOccupation(grandStatSum, phi, beta, foundedSaddlePoint, bondState).real();
         }
 
-        PF = PF * dt;
-        AO = AO / PF * dt;
-        FL = 2.0 / PF * FL * dt + AO - AO * AO;
+        statSum = statSum * integrationAccuracy;
+        averageOccupation = averageOccupation / statSum * integrationAccuracy;
 
-        N_droplet += AO;
-        Fluctuations += FL;
-        F += -log(PF);
+        particlesInDroplet += averageOccupation;
+        helmholtzFreeEnergy += -log(statSum);
     }
 
-    stringstream output;
-    output << T << "\t" << alpha * N_droplet << "\t" << alpha * Fluctuations << "\t" << F << "\n";
-    return output;
+    return make_tuple(scaleCoefficient * particlesInDroplet, helmholtzFreeEnergy);
 }

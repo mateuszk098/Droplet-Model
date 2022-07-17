@@ -3,36 +3,49 @@
 
 #include <vector>
 #include <complex>
-#include <sstream>
+#include <tuple>
 
-class droplet
+class Droplet
 {
 private:
-    int n;                        // Integration steps
-    double tp;                    // Lower limit of the integral
-    double tk;                    // Upper limit of the integral
-    double dt;                    // Integration step
-    int N_tot;                    // Total number of bosons
-    double V0;                    // Potential
-    double width;                 // Initial droplet width
-    double alpha;                 // Constant scale coefficient beetwen N_tot and width
-    std::vector<double> spectrum; // Energy spectrum, first state is a droplet state
-    double eps;                   // Saddle point accuracy
+    unsigned totalParticlesNumber;
+    double dropletWidth;
+    double systemPotential;
 
-    std::complex<double> grandstatsum(double phi, double beta, double saddle_point);
-    std::complex<double> statsum(std::complex<double> GPF, double phi, double beta, double saddle_point);
-    std::complex<double> occupation(std::complex<double> GPF, double phi, double beta, double saddle_point, int spectrum_level);
-    std::complex<double> fluctuations(std::complex<double> GPF, double phi, double beta, double saddle_point, int spectrum_level);
+    double integralLowerLimit;
+    double integralUpperLimit;
+    double saddlePointAccuracy;
+    double scaleCoefficient;
+    unsigned integrationSteps;
+    double integrationAccuracy;
 
-    double SPE(double z, double beta, int N_tot);
-    double SaddlePoint(double start, double end, double beta, int N_tot);
+    std::vector<double> dropletEnergySpectrum;
+
+    std::complex<double> grandStatisticalSum(const double &phi, const double &beta, const double &saddlePoint) const;
+
+    std::complex<double> statisticalSum(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
+                                        const double &saddlePoint) const;
+
+    std::complex<double> stateOccupation(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
+                                         const double &saddlePoint, const unsigned &spectrumState) const;
+
+    std::complex<double> stateFluctuations(const std::complex<double> &grandStatSum, const double &phi, const double &beta,
+                                           const double &saddlePoint, const unsigned &spectrumState) const;
+
+    double saddlePointFunction(const double &z, const double &beta, const unsigned &totalParticlesNumber) const;
+    double saddlePoint(double start, double end, const double &beta, const unsigned &totalParticlesNumber) const;
 
 public:
-    droplet(int this_N_tot, double this_width, double this_V0);
-    void set_spectrum(std::vector<double> this_spectrum);
-    void specific_state_properties(double T, int spectrum_level, std::string filename);
-    void state_with_temperature_change(int spectrum_level, double Tp, double Tk, double dT, std::string filename);
-    std::stringstream droplet_width(double T, double &N_droplet);
+    Droplet(const unsigned &totalParticlesNumber, const double &dropletWidth, const double &systemPotential);
+
+    void setSpectrum(const std::vector<double> &dropletEnergySpectrum);
+
+    void specificStateProperties(const double &T, const unsigned &spectrumState, const std::string &filename);
+
+    void specificStateTemperatureImpact(const unsigned &specState, const double &startTemperature, const double &endTemperature,
+                                        const double &temperatureStep, const std::string &filename) const;
+
+    std::tuple<double, double> calculateDropletWidth(const double &T, double &particlesInDroplet);
 };
 
 #endif // DROPLET_H

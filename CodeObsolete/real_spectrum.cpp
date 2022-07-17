@@ -1,5 +1,6 @@
 #define _USE_MATH_DEFINES
 #include "real_spectrum.h"
+#include <iostream>
 #include <cmath>
 
 std::vector<double> realspec::spectrum(double N_droplet, double gdd, double V, double L, int scatter_levels)
@@ -24,12 +25,19 @@ std::vector<double> realspec::spectrum(double N_droplet, double gdd, double V, d
         else
             break;
     }
+    std::cout << full_spectrum.size() << '\n';
 
     // Scatter levels
     for (int k = 1; k <= scatter_levels; k++)
     {
+        // PBC
         E = 0.5 * (2 * M_PI * k / L) * (2 * M_PI * k / L) + V;
         full_spectrum.push_back(E);
+        full_spectrum.push_back(E);
+
+        // OBC
+        // E = 0.5 * (M_PI * k / L) * (M_PI * k / L) + V;
+        // full_spectrum.push_back(E);
     }
 
     return full_spectrum;

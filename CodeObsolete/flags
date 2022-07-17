@@ -1,5 +1,6 @@
-Droplet.cpp
-Spectrum.cpp
+droplet.cpp
+well_spectrum.cpp
+real_spectrum.cpp
 main.cpp
 -o
 main

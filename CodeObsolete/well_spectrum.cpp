@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cmath>
+#include <iostream>
 #include "well_spectrum.h"
 using namespace std;
 
@@ -71,12 +72,12 @@ double wellspec::odd_eq_scatt(double x, double L, double a, double c)
 
 /** This method using bisection method to find root of function in specific subrange (xp; xk)
  * @param double xp (begin of the range)
- * @param double xk (end of the range) 
+ * @param double xk (end of the range)
  * @param function fptr (pointer to appropriate function)
  * @param double L (half-width of the infinite wall)
  * @param double a (half-width of the finite well)
  * @param double c (constant parameter characterising the well c = (2m/hbar^2)V*a^2)
- * @return double root (root of function in the range (xp; xk), 
+ * @return double root (root of function in the range (xp; xk),
  *  if method not found root in the range, then -1 is returned)
  * **/
 double wellspec::find_root(double xp, double xk, function fptr, double L, double a, double c)
@@ -111,7 +112,7 @@ double wellspec::find_root(double xp, double xk, function fptr, double L, double
 
 /** This method using multi bisection method to find every roots of function in whole range (xp; xk)
  * @param double xp (begin of the range)
- * @param double xk (end of the range) 
+ * @param double xk (end of the range)
  * @param function fptr (pointer to appropriate function)
  * @param double L (half-width of the infinite wall)
  * @param double a (half-width of the finite well)
@@ -150,7 +151,7 @@ vector<double> wellspec::find_all_roots(double xp, double xk, function fptr, dou
  * @param double V (depth of the finite well)
  * @param double c (constant parameter characterising the well c = (2m/hbar^2)V*a^2)
  * @param double xp (begin of the range)
- * @param double xk (end of the range) 
+ * @param double xk (end of the range)
  * @return std::vector<double> solutions of finite well potential problem
  * **/
 vector<double> wellspec::spectrum(double L, double a, double V, double c, double xp, double xkb, double xks)
@@ -213,6 +214,10 @@ vector<double> wellspec::spectrum(double L, double a, double V, double c, double
     auto lambda_bound_coeff = [a](double &x)
     { return -(x * x) / (2 * a * a); };
     transform(bond_roots.begin(), bond_roots.end(), bond_roots.begin(), lambda_bound_coeff);
+
+    std::cout << bond_roots.size() << '\n';
+    for(const auto&v:bond_roots)
+        std::cout << v << '\n';
 
     // I evaluate scatter energy levels
     auto lambda_scatter_coeff = [a](double &x)
