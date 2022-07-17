@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <complex>
-#include <sstream>
+#include <tuple>
 
 class Droplet
 {
@@ -42,10 +42,10 @@ public:
 
     void specificStateProperties(const double &T, const unsigned &spectrumState, const std::string &filename);
 
-    void specificStateTemperatureImpact(const unsigned &specState, const double &Tp, const double &Tk,
-                                        const double &dT, const std::string &filename) const;
+    void specificStateTemperatureImpact(const unsigned &specState, const double &startTemperature, const double &endTemperature,
+                                        const double &temperatureStep, const std::string &filename) const;
 
-    std::stringstream calculateDropletWidth(const double &T, double &particlesInDroplet);
+    std::tuple<double, double> calculateDropletWidth(const double &T, double &particlesInDroplet);
 };
 
 #endif // DROPLET_H
