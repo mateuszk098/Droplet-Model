@@ -133,7 +133,7 @@ int main(int argc, char *argv[])
             // -------------- END OF REAL SPECTRUM FROM MASTER THESIS -----------------------
 
             d->setSpectrum(full_spectrum);
-            string output = (d->dropletWidth(T, N_droplet)).str();
+            string output = (d->calculateDropletWidth(T, N_droplet)).str();
 
             if (index == thermalization - 1)
                 output_file << output;

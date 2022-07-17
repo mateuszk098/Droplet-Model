@@ -9,10 +9,11 @@
 #include <iomanip>
 using namespace std;
 
-Droplet::Droplet(const unsigned &NTot, const double &Width, const double &V) : totalParticlesNumber(NTot), width(Width), systemPotential(V),
-                                                                               integralLowerLimit(-M_PI), integralUpperLimit(M_PI), saddlePointAccuracy(1e-6)
+Droplet::Droplet(const unsigned &totalParticlesNumber, const double &dropletWidth, const double &systemPotential) : 
+totalParticlesNumber(totalParticlesNumber), dropletWidth(dropletWidth), systemPotential(systemPotential),
+integralLowerLimit(-M_PI), integralUpperLimit(M_PI), saddlePointAccuracy(1e-6)
 {
-    scaleCoefficient = width / totalParticlesNumber;
+    scaleCoefficient = dropletWidth / totalParticlesNumber;
     integrationSteps = totalParticlesNumber * 100;
     integrationAccuracy = (integralUpperLimit - integralLowerLimit) / integrationSteps;
 }
@@ -154,7 +155,7 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
 
     const double beta = 1. / T;
     const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
-    
+
     double phi = 0.;
     complex<double> grandStatSum = 0.;
 
@@ -162,7 +163,8 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
     double averageOccupation = 0.;
     double fluctuations = 0.;
 
-    #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation, fluctuations) num_threads(THREADS)
+#pragma omp parallel for private(phi, grandStatSum) reduction(+ \
+                                                              : statSum, averageOccupation, fluctuations) num_threads(THREADS)
     for (unsigned k = 1; k <= integrationSteps; k++)
     {
         phi = integralLowerLimit + k * integrationAccuracy;
@@ -193,26 +195,30 @@ void Droplet::specificStateProperties(const double &T, const unsigned &spectrumS
  * @param int bondState (specific state of energy dropletEnergySpectrum)
  * @return Text file with Droplet properties
  * **/
-void Droplet::specificStateTemperatureImpact(const unsigned &bondState, const double &Tp, const double &Tk, 
+void Droplet::specificStateTemperatureImpact(const unsigned &bondState, const double &Tp, const double &Tk,
                                              const double &dT, const std::string &filename) const
 {
     ofstream ofile(filename.c_str(), ios::out);
     ofile << setprecision(5) << std::fixed << std::showpos;
-    ofile << "T\t" << "F\t" << "<N>\t" << "Sigma\t\n"; 
+    ofile << "T\t"
+          << "F\t"
+          << "<N>\t"
+          << "Sigma\t\n";
 
-    double phi = 0.;               
-    complex<double> grandStatSum = 0.; 
-    
+    double phi = 0.;
+    complex<double> grandStatSum = 0.;
+
     double statSum = 0.;           // Partition function
-    double averageOccupation = 0.;           // Average stateOccupation
-    double fluctuations = 0.;           // Fluctuations
+    double averageOccupation = 0.; // Average stateOccupation
+    double fluctuations = 0.;      // Fluctuations
 
     for (double T = Tp; T <= Tk; T += dT)
     {
-        const double beta = 1. / T;                                                         
+        const double beta = 1. / T;
         const double foundedSaddlePoint = saddlePoint(0., 1., beta, totalParticlesNumber);
 
-        #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation, fluctuations) num_threads(THREADS)
+#pragma omp parallel for private(phi, grandStatSum) reduction(+ \
+                                                              : statSum, averageOccupation, fluctuations) num_threads(THREADS)
         for (unsigned k = 1; k <= integrationSteps; k++)
         {
             phi = integralLowerLimit + k * integrationAccuracy;
@@ -239,7 +245,7 @@ void Droplet::specificStateTemperatureImpact(const unsigned &bondState, const do
  * @param bool flag (flag of text file save)
  * @return Text file with Droplet properties
  * **/
-std::stringstream Droplet::dropletWidth(const double &T, double &particlesInDroplet)
+std::stringstream Droplet::calculateDropletWidth(const double &T, double &particlesInDroplet)
 {
     // Counting bond levels
     unsigned maxBondStates = 0;
@@ -254,12 +260,13 @@ std::stringstream Droplet::dropletWidth(const double &T, double &particlesInDrop
     double phi = 0.;
     complex<double> grandStatSum = 0.;
 
-    double statSum = 0.;           
-    double averageOccupation = 0.;                    
+    double statSum = 0.;
+    double averageOccupation = 0.;
 
     for (unsigned bondState = 0; bondState < maxBondStates; bondState++)
     {
-        #pragma omp parallel for private(phi, grandStatSum) reduction(+ : statSum, averageOccupation) num_threads(THREADS)
+#pragma omp parallel for private(phi, grandStatSum) reduction(+ \
+                                                              : statSum, averageOccupation) num_threads(THREADS)
         for (unsigned k = 1; k <= integrationSteps; k++)
         {
             phi = integralLowerLimit + k * integrationAccuracy;
