@@ -6,12 +6,14 @@
  * the calculations of canonical ensemble based on grand canonical ensemble.
  * For this purpose, I use the path integration formula based on Cauchy's
  * integration formula. This program using multithreads.
+ * Compilation: c++ @flags
+ * Usage: ./main parameters.txt
  */
 
 #define _USE_MATH_DEFINES
 
-#include "Droplet.h"
-#include "Spectrum.h"
+#include "droplet.h"
+#include "spectrum.h"
 #include <iostream>
 #include <vector>
 #include <chrono>
@@ -24,6 +26,18 @@ using std::chrono::duration_cast;
 using std::chrono::high_resolution_clock;
 using std::chrono::milliseconds;
 
+/*
+Description of some parameters.
+- option:
+    1 - Investigation of the whole quantum droplet model (temperature influence to droplet width).
+    2 - Investigation of some interesting properties of exactly one quantum state of the droplet.
+    3 - Investigation of the temperature influence to the number of particles in exactly one state.
+- spectrumType:
+    1 - Quantum Well
+    2 - Spectrum from Master Thesis
+- thermalisationSteps - after how many steps in for `temperatureStep` save the result
+    3 - or more, the safest tested is 5.
+*/
 void loadParameters(string &inputFilename, string &outputFilename, unsigned &option, unsigned &spectrumType,
                     unsigned &thermalisationSteps, unsigned &totalParticlesNumber, unsigned &spectrumEnergyState,
                     double &gdd, double &startTemperature, double &endTemperature, double &temperatureStep)
@@ -36,7 +50,7 @@ void loadParameters(string &inputFilename, string &outputFilename, unsigned &opt
         {
             input >> tmp >> outputFilename >> tmp >> option >> tmp >> spectrumType >> tmp >> thermalisationSteps;
             input >> tmp >> totalParticlesNumber >> tmp >> spectrumEnergyState >> tmp >> gdd;
-            input >> tmp >> startTemperature >> tmp >> endTemperature >> tmp >> temperatureStep;
+            input >> tmp >> startTemperature >> tmp >> endTemperature >> tmp >> temperatureStep >> tmp;
         }
         input.close();
     }
@@ -90,7 +104,7 @@ int main(int argc, char *argv[])
     Spectrum spectrumInstance(bisectionAccuracy, subBisectionNumber);
 
     // ----------------------- SIMULATION LOOP ----------------------------------------------
-    const string outputPath = "../Data/" + outputFilename;
+    const string outputPath = "../data/" + outputFilename;
     ofstream outputFile(outputPath.c_str(), ios::out);
     outputFile << setprecision(5);
 

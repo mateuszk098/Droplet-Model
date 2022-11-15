@@ -1,6 +1,6 @@
 #define _USE_MATH_DEFINES
 
-#include "Spectrum.h"
+#include "spectrum.h"
 #include <algorithm>
 #include <cmath>
 using namespace std;

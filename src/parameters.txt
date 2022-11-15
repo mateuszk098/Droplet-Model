@@ -1,0 +1,10 @@
+outputFilename          n100gdd1200.txt
+option                  1
+spectrumType            2
+thermalisationSteps     3
+totalParticlesNumber    100
+spectrumEnergyState     0
+gdd                     1200
+startTemperature        1
+endTemperature          101
+temperatureStep         10

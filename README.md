@@ -1,1 +1,1 @@
-# Droplet-Model
+# One-dimensional Quantum Droplet Model
